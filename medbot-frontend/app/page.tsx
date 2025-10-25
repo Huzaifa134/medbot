@@ -20,11 +20,14 @@ interface TranscriptionData {
 
 export default function Home() {
   const [transcriptionData, setTranscriptionData] = useState<TranscriptionData>({ text: "" });
+  const [clinicalNote, setClinicalNote] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isGeneratingNote, setIsGeneratingNote] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<"transcript" | "context" | "note">("transcript");
 
   const handleTranscriptionComplete = (data: TranscriptionData) => {
     setTranscriptionData(data);
+    setClinicalNote(""); // Reset clinical note when new transcription comes in
   };
 
   return (
@@ -108,7 +111,11 @@ export default function Home() {
           segments={transcriptionData.segments}
           numSpeakers={transcriptionData.numSpeakers}
           speakers={transcriptionData.speakers}
+          clinicalNote={clinicalNote}
+          onGenerateClinicalNote={setClinicalNote}
           isLoading={isLoading}
+          isGeneratingNote={isGeneratingNote}
+          setIsGeneratingNote={setIsGeneratingNote}
           activeTab={activeTab}
         />
       </main>

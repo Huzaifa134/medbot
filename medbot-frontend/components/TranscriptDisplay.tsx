@@ -1,6 +1,7 @@
 "use client";
 
-import { Loader2, FileText, Users } from "lucide-react";
+import { Loader2, FileText, Users, Sparkles } from "lucide-react";
+import axios from "axios";
 
 interface TranscriptSegment {
   start: number;
@@ -15,7 +16,11 @@ interface TranscriptDisplayProps {
   segments?: TranscriptSegment[];
   numSpeakers?: number;
   speakers?: string[];
+  clinicalNote: string;
+  onGenerateClinicalNote: (note: string) => void;
   isLoading: boolean;
+  isGeneratingNote: boolean;
+  setIsGeneratingNote: (loading: boolean) => void;
   activeTab: "transcript" | "context" | "note";
 }
 
@@ -24,11 +29,132 @@ export default function TranscriptDisplay({
   formattedTranscript, 
   segments, 
   numSpeakers, 
-  speakers, 
-  isLoading, 
+  speakers,
+  clinicalNote,
+  onGenerateClinicalNote,
+  isLoading,
+  isGeneratingNote,
+  setIsGeneratingNote,
   activeTab 
 }: TranscriptDisplayProps) {
-  if (activeTab !== "transcript") {
+  
+  const handleGenerateClinicalNote = async () => {
+    setIsGeneratingNote(true);
+    try {
+      const response = await axios.post("http://localhost:8000/generate-clinical-note", {
+        transcript: transcript,
+        formatted_transcript: formattedTranscript
+      });
+      
+      if (response.data && response.data.clinical_note) {
+        onGenerateClinicalNote(response.data.clinical_note);
+      }
+    } catch (error) {
+      console.error("Error generating clinical note:", error);
+      alert("Failed to generate clinical note. Please make sure the API is running.");
+    } finally {
+      setIsGeneratingNote(false);
+    }
+  };
+  // Handle Note tab
+  if (activeTab === "note") {
+    if (isGeneratingNote) {
+      return (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
+          <div className="flex flex-col items-center justify-center gap-4">
+            <Sparkles className="w-12 h-12 text-purple-600 animate-pulse" />
+            <p className="text-lg text-gray-600">Generating clinical note...</p>
+            <p className="text-sm text-gray-500">Using AI to structure the consultation</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (!clinicalNote) {
+      return (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
+          <div className="flex flex-col items-center justify-center gap-6">
+            <div className="relative">
+              <div className="w-32 h-32 bg-purple-50 rounded-full flex items-center justify-center">
+                <FileText className="w-16 h-16 text-purple-600" />
+              </div>
+            </div>
+            
+            <div className="text-center max-w-md">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+                No clinical note generated yet
+              </h2>
+              <p className="text-gray-600 mb-6">
+                {transcript ? "Click the button below to generate a structured clinical note from the transcript" : "Record a consultation first to generate a clinical note"}
+              </p>
+              
+              {transcript && (
+                <button
+                  onClick={handleGenerateClinicalNote}
+                  className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium flex items-center gap-2 mx-auto transition-colors"
+                >
+                  <Sparkles className="w-5 h-5" />
+                  Generate Clinical Note
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Display the generated clinical note
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">Clinical Note</h2>
+            <div className="flex gap-3">
+              <button
+                onClick={handleGenerateClinicalNote}
+                disabled={isGeneratingNote}
+                className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
+              >
+                <Sparkles className="w-4 h-4" />
+                Regenerate
+              </button>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(clinicalNote);
+                  alert("Clinical note copied to clipboard!");
+                }}
+                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="prose max-w-none">
+            <pre className="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed">
+              {clinicalNote}
+            </pre>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-200 px-6 py-4 bg-gray-50">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">
+              Generated at {new Date().toLocaleString()}
+            </span>
+            <button className="text-purple-600 hover:text-purple-700 font-medium">
+              Download
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle Context tab
+  if (activeTab === "context") {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
         <div className="text-center text-gray-500">
@@ -130,12 +256,22 @@ export default function TranscriptDisplay({
               </span>
             )}
           </div>
-          <button 
-            onClick={copyToClipboard}
-            className="text-sm text-purple-600 hover:text-purple-700 font-medium"
-          >
-            Copy
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleGenerateClinicalNote}
+              disabled={isGeneratingNote}
+              className="text-sm bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
+            >
+              <Sparkles className="w-4 h-4" />
+              Generate Note
+            </button>
+            <button 
+              onClick={copyToClipboard}
+              className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+            >
+              Copy
+            </button>
+          </div>
         </div>
         
         {/* Speaker Legend */}
