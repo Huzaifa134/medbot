@@ -1,0 +1,13 @@
+openai-whisper
+torch
+torchvision
+torchaudio
+pyannote.audio
+pydub
+numpy
+huggingface_hub
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+python-dotenv
