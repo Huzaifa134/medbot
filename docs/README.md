@@ -1,6 +1,6 @@
 # MedBot Documentation
 
-Welcome to the MedBot documentation! This directory contains comprehensive guides for setting up, using, and understanding the MedBot medical transcription system.
+Welcome to the MedBot documentation! This directory contains comprehensive guides for setting up, using, and understanding the MedBot medical transcription system. This Bot helps you record the conversation bw a doctor and a patient. Then uses wisper and pyannote to transcribe and diarize the conversation. It is then fed into a model that tells which one is the doctor and which one the patient and generates a short note summary for that conversation including symptoms and prescriptions to keep a medical history.
 
 ## 📚 Documentation Structure
 
